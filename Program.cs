@@ -105,6 +105,8 @@ namespace Cellereum_RR
                                 Cellereum.Register(e.Message.From.Username, e.Message.From.Id);
 
                                 Bot.SendTextMessageAsync(e.Message.Chat.Id, "Registered successfully!\nRemember that you can change your language with /language.");
+
+                                Console.WriteLine($"New register: {e.Message.From.Id} | @{e.Message.From.Username}");
                             }
                             else Bot.SendTextMessageAsync(e.Message.Chat.Id, "You need to have an username in order to register, otherwise other people couldn't tip you!");
                         }
@@ -162,75 +164,96 @@ namespace Cellereum_RR
                         Stopwatch sw = new Stopwatch();
                         sw.Start();
 
-                        if (!string.IsNullOrEmpty(args[1]) && !string.IsNullOrEmpty(args[2]))
+                        if (!string.IsNullOrEmpty(args[1]))
                         {
-                            if (Cellereum.IsRegistered(e.Message.From.Id))
+                            bool replied = true;
+                            try { e.Message.ReplyToMessage.From.Id.ToString(); } catch { replied = false; }
+
+                            if (!string.IsNullOrEmpty(args[2]) || replied)
                             {
-                                if (e.Message.From.Username != null)
+                                if (!args[2].Contains("@") && replied)
                                 {
-                                    if (Cellereum.IsRegistered(Cellereum.GetID(args[2].Substring(1))))
+                                    args[2] = "@"+Cellereum.GetUsername(e.Message.ReplyToMessage.From.Id);
+                                }
+
+                                if (Cellereum.IsRegistered(e.Message.From.Id))
+                                {
+                                    if (e.Message.From.Username != null)
                                     {
-                                        if (e.Message.From.Id != Cellereum.GetID(args[2].Substring(1)))
+                                        if (Cellereum.IsRegistered(Cellereum.GetID(args[2].Substring(1))))
                                         {
-                                            try { Convert.ToDouble(args[1]); } catch
+                                            if (e.Message.From.Id != Cellereum.GetID(args[2].Substring(1)))
                                             {
-                                                if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "Incorrect parameters. Usage: /send {amount} {username}.");
-                                                else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Parâmetros incorretos. Uso: /send {amount} {username}.");
-                                                return;
-                                            }
-
-                                            args[1] = args[1].Replace(".", ",");
-
-                                            if (Convert.ToDouble(args[1]) >= 1)
-                                            {
-                                                if (Math.Round(Convert.ToDouble(args[1]),2) <= Cellereum.GetBalance(e.Message.From.Id))
+                                                try { Convert.ToDouble(args[1]); }
+                                                catch
                                                 {
-                                                    Transactions.Send(e.Message.From.Id, Math.Round(Convert.ToDouble(args[1]), 2), args[2].Substring(1));
+                                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "Incorrect parameters. Usage: /send {amount} {username}.");
+                                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Parâmetros incorretos. Uso: /send {amount} {username}.");
+                                                    return;
+                                                }
 
-                                                    sw.Stop();
+                                                args[1] = args[1].Replace(".", ",");
 
-                                                    if (e.Message.Chat.Id != e.Message.From.Id)
+                                                if (Convert.ToDouble(args[1]) >= 1)
+                                                {
+                                                    if (Math.Round(Convert.ToDouble(args[1]), 2) <= Cellereum.GetBalance(e.Message.From.Id))
                                                     {
-                                                        if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.From.Id, $"You have sent {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs to {args[2]}.");
-                                                        else Bot.SendTextMessageAsync(e.Message.From.Id, $"Você enviou {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs para {args[2]}.");
-                                                    }
-                                                    if (Cellereum.GetLanguage(Cellereum.GetID(args[2].Substring(1))) == "English") Bot.SendTextMessageAsync(Cellereum.GetID(args[2]), $"You have received {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs from @{e.Message.From.Username}.");
-                                                    else Bot.SendTextMessageAsync(Cellereum.GetID(args[2].Substring(1)), $"Você recebeu {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs de @{e.Message.From.Username}.");
+                                                        Transactions.Send(e.Message.From.Id, Math.Round(Convert.ToDouble(args[1]), 2), args[2].Substring(1));
 
-                                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Transaction confirmed!\n\nDetails:\nSender: @{e.Message.From.Username}\nReceiver: {args[2]}\nAmount: {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs\nDuration: {Math.Round(Decimal.Divide(sw.ElapsedMilliseconds, 1000), 2)} Seconds\n{DateTime.Now}");
-                                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Transação confirmada!\n\nDetalhes:\nRemetente: @{e.Message.From.Username}\nDestinatário: {args[2]}\nQuantidade: {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs\nDuração: {Math.Round(Decimal.Divide(sw.ElapsedMilliseconds, 1000),2)} Segundos\n{DateTime.Now}");
+                                                        sw.Stop();
+
+                                                        if (e.Message.Chat.Id != e.Message.From.Id)
+                                                        {
+                                                            if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.From.Id, $"You have sent {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs to {args[2]}.");
+                                                            else Bot.SendTextMessageAsync(e.Message.From.Id, $"Você enviou {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs para {args[2]}.");
+                                                        }
+                                                        if (Cellereum.GetLanguage(Cellereum.GetID(args[2].Substring(1))) == "English") Bot.SendTextMessageAsync(Cellereum.GetID(args[2]), $"You have received {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs from @{e.Message.From.Username}.");
+                                                        else Bot.SendTextMessageAsync(Cellereum.GetID(args[2].Substring(1)), $"Você recebeu {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs de @{e.Message.From.Username}.");
+
+                                                        if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Transaction confirmed!\n\nDetails:\nSender: @{e.Message.From.Username}\nReceiver: {args[2]}\nAmount: {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs\nDuration: {Math.Round(Decimal.Divide(sw.ElapsedMilliseconds, 1000), 2)} Seconds\n{DateTime.Now}");
+                                                        else Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Transação confirmada!\n\nDetalhes:\nRemetente: @{e.Message.From.Username}\nDestinatário: {args[2]}\nQuantidade: {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs\nDuração: {Math.Round(Decimal.Divide(sw.ElapsedMilliseconds, 1000), 2)} Segundos\n{DateTime.Now}");
+                                                    }
+                                                    else
+                                                    {
+                                                        if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, $"You have {Cellereum.GetBalance(e.Message.From.Id)} CLRs, but this transaction would cost you {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs.");
+                                                        else Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Você tem {Cellereum.GetBalance(e.Message.From.Id)} CLRs, mas esta transação te custaria {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs.");
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, $"You have {Cellereum.GetBalance(e.Message.From.Id)} CLRs, but this transaction would cost you {Math.Round(Convert.ToDouble(args[1]),2)} CLRs.");
-                                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, $"Você tem {Cellereum.GetBalance(e.Message.From.Id)} CLRs, mas esta transação te custaria {Math.Round(Convert.ToDouble(args[1]), 2)} CLRs.");
+                                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "Your transaction needs to be higher than 1.");
+                                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Sua transação precisa ser maior do que 1.");
                                                 }
                                             }
                                             else
                                             {
-                                                if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "Your transaction needs to be higher than 1.");
-                                                else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Sua transação precisa ser maior do que 1.");
+                                                if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "You can't send Cellereums to yourself!");
+                                                else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Você não pode enviar Cellereums para você mesmo!");
                                             }
                                         }
                                         else
                                         {
-                                            if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "You can't send Cellereums to yourself!");
-                                            else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Você não pode enviar Cellereums para você mesmo!");
+                                            if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "This user is not registered yet.");
+                                            else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Este usuário não está registrado ainda.");
                                         }
                                     }
                                     else
                                     {
-                                        if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "This user is not registered yet.");
-                                        else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Este usuário não está registrado ainda.");
+                                        if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "You need to have an username to send Cellereums.");
+                                        else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Você precisa ter um nome de usuário para enviar Cellereums.");
                                     }
                                 }
-                                else
-                                {
-                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "You need to have an username to send Cellereums.");
-                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Você precisa ter um nome de usuário para enviar Cellereums.");
-                                }
+                                else Bot.SendTextMessageAsync(e.Message.Chat.Id, "You need to be registered to use this command.");
                             }
-                            else Bot.SendTextMessageAsync(e.Message.Chat.Id, "You need to be registered to use this command.");
+                            else
+                            {
+                                if (Cellereum.IsRegistered(e.Message.From.Id))
+                                {
+                                    if (Cellereum.GetLanguage(e.Message.From.Id) == "English") Bot.SendTextMessageAsync(e.Message.Chat.Id, "Incorrect parameters. Usage: /send {amount} {username}.");
+                                    else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Parâmetros incorretos. Uso: /send {amount} {username}.");
+                                }
+                                else Bot.SendTextMessageAsync(e.Message.Chat.Id, "Incorrect parameters. Usage: /send {amount} {username}.");
+                            }
                         }
                         else
                         {

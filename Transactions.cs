@@ -38,7 +38,7 @@ namespace Cellereum_RR
                 write.WriteLine($"Receiver: {idReceiver}");
             }
 
-            Console.WriteLine($"New Transaction: Sender: {id} / Amount: {amount} / Receiver: {idReceiver}");
+            Console.WriteLine($"New Transaction: Sender: {id} | Amount: {amount} | Receiver: {idReceiver}");
 
             while (sender.IsAlive || receiver.IsAlive) { }
         }
