@@ -53,6 +53,7 @@ namespace Cellereum_RR
             {
                 balance = Convert.ToDouble(read.ReadLine());
                 language = read.ReadLine();
+                read.ReadLine();
                 vip = read.ReadLine();
             }
 
@@ -136,19 +137,27 @@ namespace Cellereum_RR
         }
         public static string GetUsername(int id)
         {
-            using (var read = new StreamReader($@"{RootPath}\Accounts\IDs\{id}.txt"))
+            try
             {
-                read.ReadLine();
-                read.ReadLine();
-                return read.ReadLine();
+                using (var read = new StreamReader($@"{RootPath}\Accounts\IDs\{id}.txt"))
+                {
+                    read.ReadLine();
+                    read.ReadLine();
+                    return read.ReadLine();
+                }
             }
+            catch { return ""; }
         }
         public static int GetID(string username)
         {
-            using (var read = new StreamReader($@"{RootPath}\Accounts\Usernames\@{username}.txt"))
+            try
             {
-                return Convert.ToInt32(read.ReadLine());
+                using (var read = new StreamReader($@"{RootPath}\Accounts\Usernames\@{username}.txt"))
+                {
+                    return Convert.ToInt32(read.ReadLine());
+                }
             }
+            catch { return 0; }
         }
         public static bool IsVIP(int id)
         {
@@ -202,7 +211,7 @@ namespace Cellereum_RR
         public static bool WasCreatedOneDayAgo(string path, int hours=24)
         {
             var threshold = DateTime.Now.AddHours(-hours);
-            return System.IO.File.GetCreationTime(path) <= threshold;
+            return System.IO.File.GetCreationTime(path) >= threshold;
         }
         public static double RemoveDecimals(double number, int maxDecimals)
         {
@@ -218,8 +227,34 @@ namespace Cellereum_RR
             }
             else return number;
         }
+        public static bool isBlocked(string username, int id)
+        {
+            if (File.Exists(@$"{RootPath}\Accounts\SafetyBlock\@{username}.txt"))
+            {
+                if (WasCreatedOneDayAgo(@$"{RootPath}\Accounts\SafetyBlock\@{username}.txt"))
+                {
+                    int allowedId;
+
+                    using (var read = new StreamReader(@$"{RootPath}\Accounts\SafetyBlock\@{username}.txt"))
+                    {
+                        allowedId = Convert.ToInt32(read.ReadLine());
+                    }
+
+                    if (allowedId == id) return false;
+                    else return true;
+                }
+                else
+                {
+                    File.Delete(@$"{RootPath}\Accounts\SafetyBlock\@{username}.txt");
+                    return false;
+                }
+            }
+            else return false;
+        }
         public static void WaitFileAvailable(string path)
         {
+            int tries = 0;
+
             var file = new FileInfo(path);
 
             while (true)
@@ -232,7 +267,8 @@ namespace Cellereum_RR
                     }
                     break;
                 }
-                catch (IOException) { Thread.Sleep(10); }
+                catch (IOException) { tries++; Thread.Sleep(10); }
+                if (tries > 500) break;
             }
         }
     }

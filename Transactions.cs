@@ -11,7 +11,7 @@ namespace Cellereum_RR
 {
     class Transactions
     {
-        public static void Send(int id, double amount, string userReceiver)
+        public static void Send(int id, double amount, string userReceiver, bool createRegister = true)
         {
             int idReceiver = Cellereum.GetID(userReceiver);
 
@@ -21,24 +21,27 @@ namespace Cellereum_RR
             sender.Start();
             receiver.Start();
 
-            var datetime = DateTime.Now;
-            string milisecond = datetime.Millisecond.ToString();
-
-            while (milisecond.Length != 3)
+            if (createRegister)
             {
-                milisecond = "0" + milisecond;
+                var datetime = DateTime.Now;
+                string milisecond = datetime.Millisecond.ToString();
+
+                while (milisecond.Length != 3)
+                {
+                    milisecond = "0" + milisecond;
+                }
+
+                string fileName = $"{datetime.Day}.{datetime.Month}.{datetime.Year}-{datetime.Hour}.{datetime.Minute}.{milisecond}";
+                using (var write = new StreamWriter(@$"{Cellereum.RootPath}\Register\{fileName}.data"))
+                {
+                    write.WriteLine($"Sender: {id}");
+                    write.WriteLine($"Amount: {amount}");
+                    write.WriteLine($"Receiver: {idReceiver}");
+                }
+
+                Console.WriteLine($"New Transaction: Sender: {id} | Amount: {amount} | Receiver: {idReceiver}");
             }
-
-            string fileName = $"{datetime.Day}.{datetime.Month}.{datetime.Year}-{datetime.Hour}.{datetime.Minute}.{milisecond}";
-
-            using (var write = new StreamWriter(@$"{Cellereum.RootPath}\Register\{fileName}.data"))
-            {
-                write.WriteLine($"Sender: {id}");
-                write.WriteLine($"Amount: {amount}");
-                write.WriteLine($"Receiver: {idReceiver}");
-            }
-
-            Console.WriteLine($"New Transaction: Sender: {id} | Amount: {amount} | Receiver: {idReceiver}");
+            else Console.WriteLine($"New Transaction: Anon transaction");
 
             while (sender.IsAlive || receiver.IsAlive) { }
         }
