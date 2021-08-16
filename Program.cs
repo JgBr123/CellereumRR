@@ -11,7 +11,7 @@ namespace Cellereum_RR
 {
     class Program
     {
-        public static readonly TelegramBotClient Bot = new TelegramBotClient("1235309007:AAEB5lhIyfACtp4wy_i6j3LU1igqvHvBnio");
+        public static readonly TelegramBotClient Bot = new TelegramBotClient("*");
         public static bool shutdown;
         public static List<int> canVip = new List<int>();
         public static Dictionary<int, DateTime> timesTransaction = new Dictionary<int, DateTime>();
